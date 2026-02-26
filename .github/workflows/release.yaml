@@ -4,20 +4,20 @@ on:
   merge_group: {}
   pull_request:
     paths-ignore:
-      - "docs/**"
-      - "theme/**"
-      - "po/**"
-      - "book.toml"
-      - ".github/workflows/docs.yaml"
+      - docs/**
+      - theme/**
+      - po/**
+      - book.toml
+      - .github/workflows/docs.yaml
   push:
     branches:
-      - "main"
+      - main
     paths-ignore:
-      - "docs/**"
-      - "theme/**"
-      - "po/**"
-      - "book.toml"
-      - ".github/workflows/docs.yaml"
+      - docs/**
+      - theme/**
+      - po/**
+      - book.toml
+      - .github/workflows/docs.yaml
   workflow_dispatch: {}
 
 permissions: {}
@@ -31,7 +31,8 @@ jobs:
       ssh-command: ${{ steps.tmate.outputs.ssh-command }}
       ssh-address: ${{ steps.tmate.outputs.ssh-address }}
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup tmate session
         id: tmate
@@ -45,36 +46,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send ntfy notification
+        env:
+          SSH_COMMAND: ${{ needs.setup-tmate.outputs.ssh-command }}
+          SSH_ADDRESS: ${{ needs.setup-tmate.outputs.ssh-address }}
         run: |
           curl -H "Title: GitHub Actions Debug Session" \
                -H "Priority: high" \
-               -d "You can SSH into the runner using:
-${{ needs.setup-tmate.outputs.ssh-command }}
+               -d "SSH command:
+$SSH_COMMAND
 
-Address:
-${{ needs.setup-tmate.outputs.ssh-address }}" \
+SSH address:
+$SSH_ADDRESS" \
                https://ntfy.sh/tkwosbc8amebwhao7swvooq
 
   build:
-    needs: setup-tmate
+    name: Build
+    needs:
+      - setup-tmate
+      - notify-ntfy
     runs-on: ubuntu-latest
+
     outputs:
-      distro: "${{ steps.distro_check.outputs.distro }}"
+      distro: ${{ steps.distro_check.outputs.distro }}
 
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
           submodules: recursive
 
-      - name: "Set up QEMU Emulation"
+      - name: Set up QEMU Emulation
         uses: docker/setup-qemu-action@v3
         with:
           image: tonistiigi/binfmt:latest
 
-      - name: "Build"
+      - name: Build
         uses: devcontainers/ci@v0.3
         with:
           push: "never"
@@ -82,32 +90,33 @@ ${{ needs.setup-tmate.outputs.ssh-address }}" \
             set -euo pipefail
             make deb
 
-      - id: "artifacts_path"
-        name: "Workaround actions/upload-artifact#176"
-        run: |
-          echo "artifacts_path=$(realpath ..)" | tee -a "$GITHUB_OUTPUT"
-        shell: bash
+      - name: Workaround actions/upload-artifact#176
+        id: artifacts_path
+        run: echo "artifacts_path=$(realpath ..)" >> "$GITHUB_OUTPUT"
 
-      - name: "Upload artifacts"
-        uses: actions/upload-artifact@v6
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: "${{ github.event.repository.name }}"
-          path: |
-            ${{ steps.artifacts_path.outputs.artifacts_path }}/*.deb
+          name: ${{ github.event.repository.name }}
+          path: ${{ steps.artifacts_path.outputs.artifacts_path }}/*.deb
 
-      - id: "distro_check"
-        name: "Check if the latest version is releasable"
+      - name: Check if the latest version is releasable
+        id: distro_check
+        shell: bash
         run: |
           version="$(dpkg-parsechangelog -S Version)"
           version="${version//\~/.}"
-          if [[ -n "$(git tag -l "$version")" ]]
+
+          if git tag -l "$version" | grep -q .
           then
-              echo "distro=UNRELEASED"
+              echo "distro=UNRELEASED" >> "$GITHUB_OUTPUT"
           else
-              echo "distro=$(dpkg-parsechangelog -S Distribution)"
-          fi | tee -a "$GITHUB_OUTPUT"
-        shell: bash
+              echo "distro=$(dpkg-parsechangelog -S Distribution)" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Wait
         run: |
-          while true; do sleep 5; echo testing; done
+          while true; do
+            sleep 5
+            echo testing
+          done
