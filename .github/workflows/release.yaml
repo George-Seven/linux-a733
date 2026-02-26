@@ -114,9 +114,3 @@ $SSH_ADDRESS" \
               echo "distro=$(dpkg-parsechangelog -S Distribution)" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Wait
-        run: |
-          while true; do
-            sleep 5
-            echo testing
-          done
