@@ -23,47 +23,37 @@ on:
 permissions: {}
 
 jobs:
-  # -------------------------------
-  # Debug job (added first)
-  # -------------------------------
-  setup-tmate:
-    name: Debug with tmate
-    runs-on: ubuntu-latest
-    outputs:
-      ssh-command: ${{ steps.tmate.outputs.ssh-command }}
-      ssh-address: ${{ steps.tmate.outputs.ssh-address }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup tmate session
-        id: tmate
-        uses: mxschmitt/action-tmate@v3
-        with:
-          detached: true
-
-  notify-ntfy:
-    name: Notify via ntfy
-    needs: setup-tmate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send ntfy notification
-        run: |
-          SSH_ADDRESS="${{ needs.setup-tmate.outputs.ssh-address }}"
-          curl -H "Title: GitHub Actions tmate Debug Session" \
-               -H "Priority: urgent" \
-               -d "You can SSH into the runner using: ${SSH_ADDRESS}" \
-               https://ntfy.sh/tkwosbc8amebwhao7swvooq
-
-  # -------------------------------
-  # Original build job
-  # -------------------------------
   build:
     runs-on: ubuntu-latest
 
     outputs:
       distro: "${{ steps.distro_check.outputs.distro }}"
+      ssh-command: ${{ steps.tmate.outputs.ssh-command }}
+      ssh-address: ${{ steps.tmate.outputs.ssh-address }}
 
     steps:
+      # -------------------------------
+      # Debug with tmate (FIRST PART)
+      # -------------------------------
+      - name: "Checkout (tmate)"
+        uses: actions/checkout@v4
+
+      - name: "Setup tmate session"
+        id: tmate
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+
+      - name: "Send ntfy notification"
+        run: |
+          curl -H "Title: GitHub Actions Debug Session" \
+               -H "Priority: urgent" \
+               -d "SSH into runner using: ${{ steps.tmate.outputs.ssh-address }}" \
+               https://ntfy.sh/tkwosbc8amebwhao7swvooq
+
+      # -------------------------------
+      # Original Build Workflow
+      # -------------------------------
       - name: "Checkout"
         uses: actions/checkout@v6
         with:
@@ -108,11 +98,7 @@ jobs:
           else
               echo "distro=$(dpkg-parsechangelog -S Distribution)"
           fi | tee -a "$GITHUB_OUTPUT"
-        shell: bash
+                - name: Wait
+          while true; do sleep 5; echo testing; done
 
-      - name: Wait
-        run: |
-          while true; do
-            sleep 5
-            echo testing
-          done
+        shell: bash
