@@ -13,7 +13,8 @@ diff --git a/src/arch/arm64/configs/radxa.config b/src/arch/arm64/configs/radxa.
 new file mode 100644
 index 000000000000..f5bca1bdaf69
 --- /dev/null
-+++ b/src/arch/arm64/configs/radxa.config@@ -0,0 +1,1059 @@
++++ b/src/arch/arm64/configs/radxa.config
+@@ -0,0 +1,1059 @@
 +CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"
 +CONFIG_USB_NET_RNDIS_HOST=y
 +CONFIG_FHANDLE=m
