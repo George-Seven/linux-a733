@@ -4,26 +4,28 @@ on:
   merge_group: {}
   pull_request:
     paths-ignore:
-      - docs/**
-      - theme/**
-      - po/**
-      - book.toml
-      - .github/workflows/docs.yaml
+      - "docs/**"
+      - "theme/**"
+      - "po/**"
+      - "book.toml"
+      - ".github/workflows/docs.yaml"
   push:
     branches:
-      - main
+      - "main"
     paths-ignore:
-      - docs/**
-      - theme/**
-      - po/**
-      - book.toml
-      - .github/workflows/docs.yaml
+      - "docs/**"
+      - "theme/**"
+      - "po/**"
+      - "book.toml"
+      - ".github/workflows/docs.yaml"
   workflow_dispatch: {}
 
 permissions: {}
 
 jobs:
-
+  # -------------------------------
+  # Debug job (added first)
+  # -------------------------------
   setup-tmate:
     name: Debug with tmate
     runs-on: ubuntu-latest
@@ -31,8 +33,7 @@ jobs:
       ssh-command: ${{ steps.tmate.outputs.ssh-command }}
       ssh-address: ${{ steps.tmate.outputs.ssh-address }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup tmate session
         id: tmate
@@ -46,43 +47,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send ntfy notification
-        env:
-          SSH_COMMAND: ${{ needs.setup-tmate.outputs.ssh-command }}
-          SSH_ADDRESS: ${{ needs.setup-tmate.outputs.ssh-address }}
         run: |
-          curl -H "Title: GitHub Actions Debug Session" \
-               -H "Priority: high" \
-               -d "SSH command:
-$SSH_COMMAND
-
-SSH address:
-$SSH_ADDRESS" \
+          SSH_ADDRESS="${{ needs.setup-tmate.outputs.ssh-address }}"
+          curl -H "Title: GitHub Actions tmate Debug Session" \
+               -H "Priority: urgent" \
+               -d "You can SSH into the runner using: ${SSH_ADDRESS}" \
                https://ntfy.sh/tkwosbc8amebwhao7swvooq
 
+  # -------------------------------
+  # Original build job
+  # -------------------------------
   build:
-    name: Build
-    needs:
-      - setup-tmate
-      - notify-ntfy
     runs-on: ubuntu-latest
 
     outputs:
-      distro: ${{ steps.distro_check.outputs.distro }}
+      distro: "${{ steps.distro_check.outputs.distro }}"
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Checkout"
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
           submodules: recursive
 
-      - name: Set up QEMU Emulation
+      - name: "Set up QEMU Emulation"
         uses: docker/setup-qemu-action@v3
         with:
           image: tonistiigi/binfmt:latest
 
-      - name: Build
+      - name: "Build"
         uses: devcontainers/ci@v0.3
         with:
           push: "never"
@@ -90,27 +84,35 @@ $SSH_ADDRESS" \
             set -euo pipefail
             make deb
 
-      - name: Workaround actions/upload-artifact#176
-        id: artifacts_path
-        run: echo "artifacts_path=$(realpath ..)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.event.repository.name }}
-          path: ${{ steps.artifacts_path.outputs.artifacts_path }}/*.deb
-
-      - name: Check if the latest version is releasable
-        id: distro_check
+      - id: "artifacts_path"
+        name: "Workaround actions/upload-artifact#176"
+        run: |
+          echo "artifacts_path=$(realpath ..)" | tee -a "$GITHUB_OUTPUT"
         shell: bash
+
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v6
+        with:
+          name: "${{ github.event.repository.name }}"
+          path: |
+            ${{ steps.artifacts_path.outputs.artifacts_path }}/*.deb
+
+      - id: "distro_check"
+        name: "Check if the latest version is releasable"
         run: |
           version="$(dpkg-parsechangelog -S Version)"
           version="${version//\~/.}"
-
-          if git tag -l "$version" | grep -q .
+          if [[ -n "$(git tag -l "$version")" ]]
           then
-              echo "distro=UNRELEASED" >> "$GITHUB_OUTPUT"
+              echo "distro=UNRELEASED"
           else
-              echo "distro=$(dpkg-parsechangelog -S Distribution)" >> "$GITHUB_OUTPUT"
-          fi
+              echo "distro=$(dpkg-parsechangelog -S Distribution)"
+          fi | tee -a "$GITHUB_OUTPUT"
+        shell: bash
 
+      - name: Wait
+        run: |
+          while true; do
+            sleep 5
+            echo testing
+          done
