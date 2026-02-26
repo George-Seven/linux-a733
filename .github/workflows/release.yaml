@@ -98,7 +98,4 @@ jobs:
           else
               echo "distro=$(dpkg-parsechangelog -S Distribution)"
           fi | tee -a "$GITHUB_OUTPUT"
-                - name: Wait
-          while true; do sleep 5; echo testing; done
-
         shell: bash
