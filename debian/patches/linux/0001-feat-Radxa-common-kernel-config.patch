@@ -5,8 +5,8 @@ Subject: [PATCH] feat: Radxa common kernel config
 
 Signed-off-by: ZHANG Yuntian <yt@radxa.com>
 ---
- src/arch/arm64/configs/radxa.config | 1100 +++++++++++++++++++++++++++
- 1 file changed, 1100 insertions(+)
+ src/arch/arm64/configs/radxa.config | 1118 +++++++++++++++++++++++++++
+ 1 file changed, 1118 insertions(+)
  create mode 100644 src/arch/arm64/configs/radxa.config
 
 diff --git a/src/arch/arm64/configs/radxa.config b/src/arch/arm64/configs/radxa.config
@@ -14,7 +14,44 @@ new file mode 100644
 index 000000000000..f5bca1bdaf69
 --- /dev/null
 +++ b/src/arch/arm64/configs/radxa.config
-@@ -0,0 +1,1100 @@
+@@ -0,0 +1,1153 @@
++# Custom configs
++CONFIG_ANDROID=y
++CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"
++CONFIG_USB_NET_RNDIS_HOST=m
++CONFIG_USB_NET_RNDIS_WLAN=m
++CONFIG_USB_CONFIGFS_RNDIS=m
++CONFIG_FHANDLE=m
++CONFIG_UNIX_DIAG=m
++CONFIG_NETLINK_DIAG=m
++CONFIG_IP6_NF_FILTER=m
++CONFIG_IP6_NF_MANGLE=m
++CONFIG_IP6_NF_RAW=m
++CONFIG_IP6_NF_NAT=m
++CONFIG_IP_SCTP=m
++CONFIG_NFT_FIB_IPV4=m
++CONFIG_CHECKPOINT_RESTORE=y
++CONFIG_PROC_CHILDREN=y
++CONFIG_NF_NAT_IPV4=y
++CONFIG_NF_NAT_IPV6=y
++CONFIG_IP6_NF_TARGET_MASQUERADE=m
++CONFIG_IP6_NF_IPTABLES=m
++CONFIG_NF_NAT_MASQUERADE_IPV6=y
++CONFIG_NF_CONNTRACK_IPV6=y
++CONFIG_ACPI=y
++CONFIG_ACPI_APEI=y
++CONFIG_HAVE_ACPI_APEI=y
++CONFIG_PSTORE=y
++CONFIG_UEFI_CPER=y
++CONFIG_SQUASHFS_FILE_CACHE=y
++CONFIG_SQUASHFS_FILE_DIRECT=y
++CONFIG_SQUASHFS_DECOMP_SINGLE=y
++CONFIG_SQUASHFS_DECOMP_MULTI=y
++CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU=y
++CONFIG_FANOTIFY=y
++CONFIG_ATH9K_HTC=m
++CONFIG_NET_SCH_TBF=m
++
 +# Enable FPDT on supported platforms
 +CONFIG_ACPI_FPDT=y
 +
@@ -236,9 +273,11 @@ index 000000000000..f5bca1bdaf69
 +# Enable Synopsys DesignWare Cores Mobile Storage Controller
 +CONFIG_MMC_SDHCI_OF_DWCMSHC=m
 +
-+# Enable PWM driven multi-color LED
++# Enable multi-color LED
++CONFIG_LEDS_CLASS_MULTICOLOR=m
 +CONFIG_LEDS_PWM=m
 +CONFIG_LEDS_PWM_MULTICOLOR=m
++CONFIG_LEDS_WS2812B=m
 +
 +# Enable Microchip Ethernet Controller
 +CONFIG_NET_VENDOR_MICROCHIP=y
@@ -486,6 +525,7 @@ index 000000000000..f5bca1bdaf69
 +CONFIG_NTFS_RW=y
 +
 +# Support network filesystem
++CONFIG_NFS_FS=m
 +CONFIG_NFS_V4_1=y
 +CONFIG_NFS_V4_2=y
 +CONFIG_NFS_V4_1_MIGRATION=y
@@ -595,6 +635,14 @@ index 000000000000..f5bca1bdaf69
 +CONFIG_V4L2_FWNODE=m
 +CONFIG_VIDEOBUF2_V4L2=m
 +
++# Enable some popular camera sensors
++CONFIG_VIDEO_IMX214=m
++CONFIG_VIDEO_IMX219=m
++CONFIG_VIDEO_IMX415=m
++CONFIG_VIDEO_IMX708=m
++CONFIG_VIDEO_OV5647=m
++CONFIG_VIDEO_DW9807_VCM=m
++
 +# Enable WireGuard
 +CONFIG_WIREGUARD=m
 +
@@ -609,7 +657,7 @@ index 000000000000..f5bca1bdaf69
 +CONFIG_MSDOS_FS=m
 +CONFIG_VFAT_FS=m
 +CONFIG_EXFAT_FS=m
-+CONFIG_NTFS_FS=n
++CONFIG_NTFS_FS=m
 +CONFIG_FUSE_FS=m
 +
 +# Enable graphic drivers
@@ -924,19 +972,26 @@ index 000000000000..f5bca1bdaf69
 +# Enable r8169 driver, which supports RTL8125
 +CONFIG_R8169=m
 +
-+# Enable DRM support for some display panels
++# Enable DRM support for some display panels and bridge chips
++CONFIG_DRM_LONTIUM_LT8712SX=m
++CONFIG_DRM_PANEL_ILITEK_ILI9881C=m
 +CONFIG_DRM_PANEL_JADARD_JD9365DA_H3=m
 +CONFIG_DRM_PANEL_ORISETECH_OTA7290B=m
-+CONFIG_DRM_PANEL_RASPBERRYPI_TOUCHSCREEN=m
 +CONFIG_DRM_PANEL_SITRONIX_ST7701=m
 +CONFIG_DRM_PANEL_SITRONIX_ST7789V=m
 +CONFIG_DRM_PANEL_SITRONIX_ST7789V=m
++CONFIG_DRM_TOSHIBA_TC358762=m
 +CONFIG_TINYDRM_ILI9486=m
 +
 +# Enable input touchscreen support
 +CONFIG_INPUT_TOUCHSCREEN=y
 +CONFIG_TOUCHSCREEN_ADS7846=m
 +CONFIG_TOUCHSCREEN_GOODIX=m
++CONFIG_TOUCHSCREEN_EDT_FT5X06=m
++
++# Enable regulator support for raspberry pi touchscreens
++CONFIG_REGULATOR_RASPBERRYPI_TOUCHSCREEN_ATTINY=m
++CONFIG_REGULATOR_RASPBERRYPI_TOUCHSCREEN_V2=m
 +
 +# Enable user level input driver support
 +CONFIG_INPUT_MISC=y
